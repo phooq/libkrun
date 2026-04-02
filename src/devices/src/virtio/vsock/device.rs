@@ -6,6 +6,7 @@
 // found in the THIRD-PARTY file.
 
 use std::collections::HashMap;
+use std::net::IpAddr;
 use std::path::PathBuf;
 use std::sync::{Arc, Mutex};
 
@@ -55,10 +56,17 @@ impl Vsock {
         host_port_map: Option<HashMap<u16, u16>>,
         unix_ipc_port_map: Option<HashMap<u32, (PathBuf, bool)>>,
         tsi_flags: TsiFlags,
+        egress_cidrs: Option<Vec<(IpAddr, u8)>>,
     ) -> super::Result<Vsock> {
         Ok(Vsock {
             cid,
-            muxer: VsockMuxer::new(cid, host_port_map, unix_ipc_port_map, tsi_flags),
+            muxer: VsockMuxer::new(
+                cid,
+                host_port_map,
+                unix_ipc_port_map,
+                tsi_flags,
+                egress_cidrs,
+            ),
             queue_rx: None,
             queue_tx: None,
             queue_events: Vec::new(),
@@ -273,7 +281,10 @@ impl VirtioDevice for Vsock {
 
         self.device_state = DeviceState::Activated(mem, interrupt);
 
-        info!("[VSOCK_TIMING] device.activate() completed in {:?}", activate_start.elapsed());
+        info!(
+            "[VSOCK_TIMING] device.activate() completed in {:?}",
+            activate_start.elapsed()
+        );
         Ok(())
     }
 
